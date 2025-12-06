@@ -3,7 +3,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        String path = "C:\\Users\\moham\\IdeaProjects\\cpu-scheduler\\scheduler\\src\\processesok.csv";
+        String path = "processesok.csv";
 
         try {
             List<Process> processes = ProcessCSVreader.loadProcesses(path);
@@ -12,6 +12,7 @@ public class Main {
                 System.out.println(p);
             }
             // here you would pass `processes` to FCFS, SJF, etc.
+            PriorityPreemptiveScheduler.run(processes);  //omar elgenidy part
         } catch (IOException e) {
             System.err.println("I/O error while reading file: " + e.getMessage());
         } catch (IllegalArgumentException e) {
