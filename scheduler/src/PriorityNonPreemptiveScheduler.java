@@ -1,10 +1,11 @@
+
 import java.util.*;
 
 public class PriorityNonPreemptiveScheduler {
 
-    private final List<String> ganttChart = new ArrayList<>();
+    private final static List<String> ganttChart = new ArrayList<>();
 
-    public void schedule(List<Process> processes) {
+    public  static void schedule(List<Process> processes) {
 
         processes.sort(Comparator.comparingInt(Process::getArrivalTime));
 
@@ -69,7 +70,7 @@ public class PriorityNonPreemptiveScheduler {
     }
 
 
-    private void printResults(
+    private static void printResults(
             List<Process> processes,
             Map<Process, Integer> startTime,
             Map<Process, Integer> completionTime,
