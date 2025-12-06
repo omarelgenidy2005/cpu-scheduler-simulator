@@ -1,27 +1,29 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 public class PriorityPreemptiveScheduler {
 
-    // class to keep track of the needed values for each process
-    private static class ProcessState {
-        Process process;
-        int remainingTime;
-        Integer completionTime;
-        Integer firstStartTime;
+    static class ProcInfo {
+        Process p;         
+        int remaining;       
+        int completionTime;  
+        int firstStartTime;  
+        boolean started;     
 
-        ProcessState(Process p) {
-            this.process = p;
-            this.remainingTime = p.getBurstTime();
+        ProcInfo(Process p) {
+            this.p = p;
+            this.remaining = p.getBurstTime();
+            this.started = false;
         }
     }
 
-    private static class GanttEntry {
+   
+    static class GanttBlock {
         String pid;
         int start;
-        int end;
+        int end;   // end is exclusive
 
-        GanttEntry(String pid, int start, int end) {
+        GanttBlock(String pid, int start, int end) {
             this.pid = pid;
             this.start = start;
             this.end = end;
@@ -34,13 +36,12 @@ public class PriorityPreemptiveScheduler {
 
     public static void run(List<Process> processes) {
 
-        // turn each process into a mutable state
-        List<ProcessState> states = new ArrayList<>();
+        List<ProcInfo> infos = new ArrayList<>();
         for (Process p : processes) {
-            states.add(new ProcessState(p));
+            infos.add(new ProcInfo(p));
         }
 
-        // find the smallest arrival time (simulation start)
+        
         int startTime = processes.get(0).getArrivalTime();
         for (Process p : processes) {
             if (p.getArrivalTime() < startTime) {
@@ -48,38 +49,36 @@ public class PriorityPreemptiveScheduler {
             }
         }
 
-        int time = startTime;
-        int finished = 0;
-        int n = states.size();
-        int totalBurst = 0;
+        int time = startTime;        
+        int finished = 0;             
+        int n = infos.size();         
 
-        for (Process p : processes) {
-            totalBurst += p.getBurstTime();
-        }
+        List<GanttBlock> gantt = new ArrayList<>();
 
-        List<GanttEntry> gantt = new ArrayList<>();
-
-        // run the simulation until all processes finish
+  
         while (finished < n) {
 
-            // pick the ready process that has the highest priority
-            ProcessState best = null;
+            ProcInfo best = null;
 
-            for (ProcessState ps : states) {
-                Process p = ps.process;
+            for (ProcInfo info : infos) {
+                Process p = info.p;
 
-                if (p.getArrivalTime() <= time && ps.remainingTime > 0) {
+                
+                if (p.getArrivalTime() <= time && info.remaining > 0) {
 
                     if (best == null) {
-                        best = ps;
+                        best = info;
                     } else {
-                        // smaller priority value means higher priority
-                        if (p.getPriority() < best.process.getPriority()) {
-                            best = ps;
-                        } else if (p.getPriority() == best.process.getPriority()) {
-                            // tie → earlier arrival wins
-                            if (p.getArrivalTime() < best.process.getArrivalTime()) {
-                                best = ps;
+                        int curPr = p.getPriority();
+                        int bestPr = best.p.getPriority();
+
+                        
+                        if (curPr < bestPr) {
+                            best = info;
+                        } else if (curPr == bestPr) {
+                           
+                            if (p.getArrivalTime() < best.p.getArrivalTime()) {
+                                best = info;
                             }
                         }
                     }
@@ -87,90 +86,71 @@ public class PriorityPreemptiveScheduler {
             }
 
             if (best == null) {
-                
                 time++;
                 continue;
             }
 
-            if (best.firstStartTime == null) {
+            if (!best.started) {
                 best.firstStartTime = time;
+                best.started = true;
             }
 
-            // update the Gantt chart
+            // Update Gantt chart: extend last block or start a new one
             if (gantt.isEmpty()) {
-                gantt.add(new GanttEntry(best.process.getPid(), time, time + 1));
+                gantt.add(new GanttBlock(best.p.getPid(), time, time + 1));
             } else {
-                GanttEntry last = gantt.get(gantt.size() - 1);
-                if (last.pid.equals(best.process.getPid())) {
+                GanttBlock last = gantt.get(gantt.size() - 1);
+                if (last.pid.equals(best.p.getPid())) {
+                   
                     last.end++;
                 } else {
-                    gantt.add(new GanttEntry(best.process.getPid(), time, time + 1));
+                    gantt.add(new GanttBlock(best.p.getPid(), time, time + 1));
                 }
             }
-
-            best.remainingTime--;
+            best.remaining--;
             time++;
 
-            if (best.remainingTime == 0) {
+            if (best.remaining == 0) {
                 best.completionTime = time;
                 finished++;
             }
         }
 
+        // ========== OUTPUT ==========
+
         System.out.println("\n=== Preemptive Priority Scheduling ===\n");
 
         System.out.println("Gantt Chart:");
-        for (GanttEntry g : gantt) {
-            System.out.print(g + " ");
+        for (GanttBlock b : gantt) {
+            System.out.print(b + " ");
         }
         System.out.println("\n");
-
-        double totalWT = 0;
-        double totalTAT = 0;
-        double totalRT = 0;
 
         System.out.println("Per-process metrics:");
         System.out.println("PID\tAT\tBT\tPR\tCT\tTAT\tWT\tRT");
 
-        for (ProcessState ps : states) {
-            Process p = ps.process;
+        for (ProcInfo info : infos) {
+            Process p = info.p;
 
-            int ct = ps.completionTime;
-            int tat = ct - p.getArrivalTime();
-            int wt = tat - p.getBurstTime();
-            int rt = ps.firstStartTime - p.getArrivalTime();
-
-            totalWT += wt;
-            totalTAT += tat;
-            totalRT += rt;
+            int at = p.getArrivalTime();
+            int bt = p.getBurstTime();
+            int pr = p.getPriority();
+            int ct = info.completionTime;
+            int tat = ct - at;          // Turnaround time
+            int wt = tat - bt;          // Waiting time
+            int rt = info.firstStartTime - at;  // Response time
 
             System.out.println(
                     p.getPid() + "\t" +
-                            p.getArrivalTime() + "\t" +
-                            p.getBurstTime() + "\t" +
-                            p.getPriority() + "\t" +
-                            ct + "\t" +
-                            tat + "\t" +
-                            wt + "\t" +
-                            rt
+                    at + "\t" +
+                    bt + "\t" +
+                    pr + "\t" +
+                    ct + "\t" +
+                    tat + "\t" +
+                    wt + "\t" +
+                    rt
             );
         }
-
-        double avgWT = totalWT / n;
-        double avgTAT = totalTAT / n;
-        double avgRT = totalRT / n;
-
-        double totalTime = time - startTime;
-        double throughput = n / totalTime;
-        double utilization = (totalBurst * 100.0) / totalTime;
-
-        System.out.println("\nAverages:");
-        System.out.println("Average Waiting Time    = " + avgWT);
-        System.out.println("Average Turnaround Time = " + avgTAT);
-        System.out.println("Average Response Time   = " + avgRT);
-
-        System.out.println("\nOther metrics:");
-        System.out.println("Throughput      = " + throughput + " processes per unit time");
-        System.out.println("CPU Utilization = " + utilization + "%");
     }
+    
 }
