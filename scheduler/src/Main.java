@@ -12,6 +12,19 @@ public class Main {
                 System.out.println(p);
             }
             // here you would pass `processes` to FCFS, SJF, etc.
+            FCFSScheduler fcfs = new FCFSScheduler();
+            SchedulerResult r1 = fcfs.schedule(processes);
+
+            System.out.println("===== FCFS =====");
+            r1.getGantt().forEach(System.out::println);
+            r1.getMetrics().values().forEach(System.out::println);
+
+            SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
+            SchedulerResult r2 = sjf.schedule(processes);
+
+            System.out.println("\n===== SJF NON-PREEMPTIVE =====");
+            r2.getGantt().forEach(System.out::println);
+            r2.getMetrics().values().forEach(System.out::println);
             PriorityPreemptiveScheduler.run(processes);  //omar elgenidy part
         } catch (IOException e) {
             System.err.println("I/O error while reading file: " + e.getMessage());

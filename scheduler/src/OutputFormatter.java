@@ -29,7 +29,7 @@ public class OutputFormatter {
         System.out.println();
     }
 
-    /
+
     private static void printGanttChart(List<GanttEntry> ganttEntries) {
         System.out.println("Gantt Chart (time on bottom):");
 
