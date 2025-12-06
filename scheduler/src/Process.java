@@ -3,7 +3,12 @@ public class Process {
     private final String pid;
     private final int arrivalTime;
     private final int burstTime;
+
     private final int priority;
+
+    private int remainingTime;
+    private int startTime;
+    private int completionTime;
 
     public Process(String pid, int arrivalTime, int burstTime, int priority) {
         if (pid == null || pid.isBlank()) {
@@ -23,6 +28,10 @@ public class Process {
         this.arrivalTime = arrivalTime;
         this.burstTime = burstTime;
         this.priority = priority;
+
+        this.remainingTime = burstTime;
+        this.startTime = -1;
+        this.completionTime = -1;
     }
 
     public String getPid() {
@@ -41,6 +50,49 @@ public class Process {
         return priority;
     }
 
+    public int getRemainingTime() {
+        return remainingTime;
+    }
+
+    public void setRemainingTime(int remainingTime) {
+        if (remainingTime < 0) {
+            throw new IllegalArgumentException("Remaining time cannot be negative");
+        }
+        this.remainingTime = remainingTime;
+    }
+
+    public int getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(int startTime) {
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Start time cannot be negative");
+        }
+        this.startTime = startTime;
+    }
+
+    public int getCompletionTime() {
+        return completionTime;
+    }
+
+    public void setCompletionTime(int completionTime) {
+        if (completionTime < 0) {
+            throw new IllegalArgumentException("Completion time cannot be negative");
+        }
+        this.completionTime = completionTime;
+    }
+
+    public int getTurnaroundTime() {
+        if (completionTime < 0) return -1;
+        return completionTime - arrivalTime;
+    }
+
+    public int getWaitingTime() {
+        if (completionTime < 0) return -1;
+        return getTurnaroundTime() - burstTime;
+    }
+
     @Override
     public String toString() {
         return "Process{" +
@@ -48,6 +100,9 @@ public class Process {
                 ", arrivalTime=" + arrivalTime +
                 ", burstTime=" + burstTime +
                 ", priority=" + priority +
+                ", remainingTime=" + remainingTime +
+                ", startTime=" + startTime +
+                ", completionTime=" + completionTime +
                 '}';
     }
 
