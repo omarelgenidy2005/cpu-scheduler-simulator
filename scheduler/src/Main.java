@@ -37,6 +37,12 @@ public class Main {
             SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
             SchedulerResult r2 = sjf.schedule(processes);
 
+            RoundRobin rr = new RoundRobin();
+            int quantum = 2;
+
+            SchedulerResult rrResult = rr.schedule(processes, quantum);
+            OutputFormatter.printScheduleReport("Round Robin (q=" + quantum + ")", rrResult);
+          
             PriorityPreemptiveScheduler.run(processes); //omar elgnidy part
 
         } catch (IOException e) {
