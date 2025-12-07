@@ -11,7 +11,7 @@ public class Main {
             for (Process p : processes) {
                 System.out.println(p);
             }
-            // here you would pass processes to FCFS, SJF, etc.
+            
             FCFSScheduler fcfs = new FCFSScheduler();
             SchedulerResult r1 = fcfs.schedule(processes);
 
