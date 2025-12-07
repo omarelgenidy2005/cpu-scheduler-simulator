@@ -1,103 +1,101 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
-public class RoundRobin {
+public class RoundRobin{
 
-    private List<Process> processes;
-    private List<GanttEntry> gantt;
-    private int quantum;
+    public SchedulerResult schedule(List<Process> processes, int quantum) {
 
-    public RoundRobin(List<Process> processes, int quantum) {
         if (quantum <= 0) {
             throw new IllegalArgumentException("Quantum must be > 0");
         }
 
+        List<Process> sorted = new ArrayList<>();
+        for (Process p : processes) {
+            Process copy = new Process(
+                    p.getPid(),
+                    p.getArrivalTime(),
+                    p.getBurstTime(),
+                    p.getPriority()
+            );
+            sorted.add(copy);
+        }
 
-        this.processes = new ArrayList<>(processes);
-        this.gantt = new ArrayList<>();
-        this.quantum = quantum;
+        sorted.sort(Comparator
+                .comparingInt(Process::getArrivalTime)
+                .thenComparing(Process::getPid));
 
-
-        this.processes.sort((p1, p2) -> {
-            if (p1.getArrivalTime() != p2.getArrivalTime()) {
-                return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
-            }
-            return p1.getPid().compareTo(p2.getPid());
-        });
-    }
-
-    public void schedule() {
-        int time = 0;
-        int n = processes.size();
-        int finished = 0;
-        int index = 0;
+        List<GanttEntry> gantt = new ArrayList<>();
+        Map<String, ProcessMetrics> metrics = new LinkedHashMap<>();
 
         Queue<Process> readyQueue = new LinkedList<>();
 
-        while (finished < n) {
+        int time = 0;
+        int index = 0;
+        int n = sorted.size();
+        int completed = 0;
 
+        while (completed < n) {
 
-            while (index < n && processes.get(index).getArrivalTime() <= time) {
-                readyQueue.add(processes.get(index));
+            while (index < n && sorted.get(index).getArrivalTime() <= time) {
+                readyQueue.add(sorted.get(index));
                 index++;
             }
 
-
             if (readyQueue.isEmpty()) {
                 if (index < n) {
-                    int nextArrival = processes.get(index).getArrivalTime();
-                    if (nextArrival > time) {
-                        gantt.add(new GanttEntry("IDLE", time, nextArrival));
-                        time = nextArrival;
-                        continue;
-                    }
+                    time = sorted.get(index).getArrivalTime();
+                    continue;
                 } else {
                     break;
                 }
             }
 
-            Process current = readyQueue.poll();
+            Process p = readyQueue.poll();
 
-            if (current.getStartTime() == -1) {
-                current.setStartTime(time);
+            if (p.getStartTime() == -1) {
+                p.setStartTime(time);
             }
 
-            int runFor = Math.min(quantum, current.getRemainingTime());
-            int sliceStart = time;
+            int runTime = Math.min(quantum, p.getRemainingTime());
+            int start = time;
 
-            for (int i = 0; i < runFor; i++) {
-                current.setRemainingTime(current.getRemainingTime() - 1);
+            int used = 0;
+            while (used < runTime && p.getRemainingTime() > 0) {
+                p.setRemainingTime(p.getRemainingTime() - 1);
                 time++;
+                used++;
 
-                while (index < n && processes.get(index).getArrivalTime() <= time) {
-                    readyQueue.add(processes.get(index));
+                while (index < n && sorted.get(index).getArrivalTime() <= time) {
+                    readyQueue.add(sorted.get(index));
                     index++;
                 }
-
-                if (current.getRemainingTime() == 0) {
-                    break;
-                }
             }
 
-            int sliceEnd = time;
-            gantt.add(new GanttEntry(current.getPid(), sliceStart, sliceEnd));
+            int end = time;
+            gantt.add(new GanttEntry(p.getPid(), start, end));
 
-            if (current.getRemainingTime() == 0) {
-                current.setCompletionTime(time);
-                finished++;
+            if (p.getRemainingTime() == 0) {
+                p.setCompletionTime(end);
+
+                int completionTime = end;
+                int turnaroundTime = completionTime - p.getArrivalTime();
+                int waitingTime = turnaroundTime - p.getBurstTime();
+                int responseTime = p.getStartTime() - p.getArrivalTime();
+
+                ProcessMetrics m = new ProcessMetrics(
+                        p,
+                        completionTime,
+                        turnaroundTime,
+                        waitingTime,
+                        responseTime
+                );
+
+                metrics.put(p.getPid(), m);
+                completed++;
             } else {
-                readyQueue.add(current);
+                readyQueue.add(p);
             }
         }
-    }
 
-    public List<GanttEntry> getGantt() {
-        return gantt;
-    }
-
-    public List<Process> getProcesses() {
-        return processes;
+        return new SchedulerResult(gantt, metrics);
     }
 }

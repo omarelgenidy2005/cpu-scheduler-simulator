@@ -33,32 +33,12 @@ public class Main {
             OutputFormatter.printScheduleReport("Multi-Level Feedback Queue (MLFQ)", mlfqResult);
 
 
+
+            RoundRobin rr = new RoundRobin();
             int quantum = 2;
 
-            RoundRobin rr = new RoundRobin(processes, quantum);
-            rr.schedule();
-
-            System.out.println("\n===== Round Robin (Quantum = " + quantum + ") =====");
-            for (GanttEntry g : rr.getGantt()) {
-                System.out.println(g);
-            }
-
-            System.out.println("\nProcess Metrics:");
-            for (Process p : rr.getProcesses()) {
-                int ct = p.getCompletionTime();
-                int tat = ct - p.getArrivalTime();
-                int wt = tat - p.getBurstTime();
-                int rt = p.getStartTime() - p.getArrivalTime();
-
-                System.out.println(
-                        p.getPid() +
-                                " | CT=" + ct +
-                                " | TAT=" + tat +
-                                " | WT=" + wt +
-                                " | RT=" + rt
-                );
-            }
-
+            SchedulerResult rrResult = rr.schedule(processes, quantum);
+            OutputFormatter.printScheduleReport("Round Robin (q=" + quantum + ")", rrResult);
 
             PriorityPreemptiveScheduler.run(processes);
 
