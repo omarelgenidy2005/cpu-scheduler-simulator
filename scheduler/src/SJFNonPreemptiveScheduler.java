@@ -5,7 +5,6 @@ public class SJFNonPreemptiveScheduler {
     public SchedulerResult schedule(List<Process> processes) {
 
         List<Process> all = new ArrayList<>(processes);
-
         all.sort(Comparator.comparingInt(Process::getArrivalTime));
 
         List<GanttEntry> gantt = new ArrayList<>();
@@ -38,13 +37,20 @@ public class SJFNonPreemptiveScheduler {
 
             gantt.add(new GanttEntry(p.getPid(), start, end));
 
-            ProcessMetrics m = new ProcessMetrics(p);
-            m.completionTime = end;
-            m.turnaroundTime = m.completionTime - m.arrivalTime;
-            m.waitingTime = m.turnaroundTime - m.burstTime;
-            m.responseTime = start - m.arrivalTime;
+            int completionTime = end;
+            int turnaroundTime = completionTime - p.getArrivalTime();
+            int waitingTime = turnaroundTime - p.getBurstTime();
+            int responseTime = start - p.getArrivalTime();
 
-            metrics.put(m.pid, m);
+            ProcessMetrics m = new ProcessMetrics(
+                    p,
+                    completionTime,
+                    turnaroundTime,
+                    waitingTime,
+                    responseTime
+            );
+
+            metrics.put(p.getPid(), m);
 
             time = end;
             completed++;
