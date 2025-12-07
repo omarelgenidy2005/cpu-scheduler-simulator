@@ -5,10 +5,7 @@ import java.util.*;
 
 public class ProcessCSVreader {
 
-    /**
-     * reads processes from a csv file.
-     * pid,arrival,burst,priority
-     */
+
     public static List<Process> loadProcesses(String filePath) throws IOException {
         List<Process> processes = new ArrayList<>();
         Set<String> usedPids = new HashSet<>();
@@ -21,7 +18,7 @@ public class ProcessCSVreader {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // to skip header if present
+
                 if (isFirstLine && looksLikeHeader(line)) {
                     isFirstLine = false;
                     continue;

@@ -74,6 +74,7 @@ public class Process {
 
     public int getCompletionTime() {
         return completionTime;
+
     }
 
     public void setCompletionTime(int completionTime) {

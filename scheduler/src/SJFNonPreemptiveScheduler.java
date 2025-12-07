@@ -1,7 +1,5 @@
 import java.util.*;
-
 public class SJFNonPreemptiveScheduler {
-
     public SchedulerResult schedule(List<Process> processes) {
 
         List<Process> all = new ArrayList<>(processes);
@@ -9,8 +7,8 @@ public class SJFNonPreemptiveScheduler {
 
         List<GanttEntry> gantt = new ArrayList<>();
         Map<String, ProcessMetrics> metrics = new LinkedHashMap<>();
-
         List<Process> ready = new ArrayList<>();
+
         int time = 0;
         int index = 0;
         int n = all.size();
@@ -29,7 +27,6 @@ public class SJFNonPreemptiveScheduler {
             }
 
             ready.sort(Comparator.comparingInt(Process::getBurstTime));
-
             Process p = ready.remove(0);
 
             int start = time;
@@ -58,4 +55,5 @@ public class SJFNonPreemptiveScheduler {
 
         return new SchedulerResult(gantt, metrics);
     }
+
 }
