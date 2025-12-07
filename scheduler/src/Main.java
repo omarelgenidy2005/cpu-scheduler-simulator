@@ -16,8 +16,7 @@ public class Main {
             SchedulerResult fcfsResult = fcfs.schedule(processes);
             OutputFormatter.printScheduleReport("FCFS", fcfsResult);
 
-            PriorityNonPreemptiveScheduler scheduler =
-                    new PriorityNonPreemptiveScheduler();
+            PriorityNonPreemptiveScheduler scheduler = new PriorityNonPreemptiveScheduler();
 
             scheduler.schedule(processes);
 
