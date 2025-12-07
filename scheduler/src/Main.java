@@ -5,6 +5,7 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+            
             List<Process> processes = ProcessCSVreader.loadProcesses("processes.csv");
 
             FCFSScheduler fcfs = new FCFSScheduler();
