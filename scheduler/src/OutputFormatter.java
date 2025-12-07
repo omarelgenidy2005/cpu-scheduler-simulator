@@ -1,15 +1,18 @@
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class OutputFormatter {
 
-    public static void printScheduleReport(String algorithmName,
-                                           List<GanttEntry> ganttEntries,
-                                           List<ProcessMetrics> metrics) {
-        if (metrics == null || metrics.isEmpty()) {
+    public static void printScheduleReport(String algorithmName, SchedulerResult result) {
+        if (result == null || result.getMetrics() == null || result.getMetrics().isEmpty()) {
             System.out.println("No metrics to display for " + algorithmName);
             return;
         }
+
+        List<GanttEntry> gantt = result.getGantt();
+        List<ProcessMetrics> metrics =
+                new ArrayList<>(result.getMetrics().values()); 
 
         System.out.println();
         System.out.println("====================================================");
@@ -17,8 +20,8 @@ public class OutputFormatter {
         System.out.println("====================================================");
         System.out.println();
 
-        if (ganttEntries != null && !ganttEntries.isEmpty()) {
-            printGanttChart(ganttEntries);
+        if (gantt != null && !gantt.isEmpty()) {
+            printGanttChart(gantt);
             System.out.println();
         }
 
@@ -29,9 +32,15 @@ public class OutputFormatter {
         System.out.println();
     }
 
+    
 
     private static void printGanttChart(List<GanttEntry> ganttEntries) {
         System.out.println("Gantt Chart (time on bottom):");
+
+        if (ganttEntries.isEmpty()) {
+            System.out.println("[no execution]");
+            return;
+        }
 
         StringBuilder top = new StringBuilder();
         StringBuilder middle = new StringBuilder();
@@ -65,33 +74,30 @@ public class OutputFormatter {
         System.out.println(timeLine);
     }
 
-    
+   
 
     private static void printProcessTable(List<ProcessMetrics> metrics) {
         System.out.println("Per-Process Metrics:");
         System.out.println("---------------------------------------------------------------");
         System.out.printf("%-6s %-6s %-6s %-6s %-6s %-6s %-6s%n",
                 "PID", "AT", "BT", "CT", "TAT", "WT", "RT");
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("------------------------------------------------------------");
 
         metrics.stream()
-               .sorted(Comparator.comparing(m -> m.getProcess().getPid()))
-               .forEach(m -> {
-                   Process p = m.getProcess();
-                   System.out.printf("%-6s %-6d %-6d %-6d %-6d %-6d %-6d%n",
-                           p.getPid(),
-                           p.getArrivalTime(),
-                           p.getBurstTime(),
-                           m.getCompletionTime(),
-                           m.getTurnaroundTime(),
-                           m.getWaitingTime(),
-                           m.getResponseTime());
-               });
+                .sorted(Comparator.comparing(m -> m.pid))
+                .forEach(m -> System.out.printf("%-6s %-6d %-6d %-6d %-6d %-6d %-6d%n",
+                        m.pid,
+                        m.arrivalTime,
+                        m.burstTime,
+                        m.completionTime,
+                        m.turnaroundTime,
+                        m.waitingTime,
+                        m.responseTime));
 
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("------------------------------------------------------------");
     }
 
-    
+  
 
     private static void printGlobalMetrics(List<ProcessMetrics> metrics) {
         int n = metrics.size();
@@ -105,25 +111,23 @@ public class OutputFormatter {
         int totalBurst = 0;
 
         for (ProcessMetrics m : metrics) {
-            Process p = m.getProcess();
+            sumWT += m.waitingTime;
+            sumTAT += m.turnaroundTime;
+            sumRT += m.responseTime;
 
-            sumWT  += m.getWaitingTime();
-            sumTAT += m.getTurnaroundTime();
-            sumRT  += m.getResponseTime();
-
-            if (p.getArrivalTime() < minArrival) {
-                minArrival = p.getArrivalTime();
+            if (m.arrivalTime < minArrival) {
+                minArrival = m.arrivalTime;
             }
-            if (m.getCompletionTime() > maxCompletion) {
-                maxCompletion = m.getCompletionTime();
+            if (m.completionTime > maxCompletion) {
+                maxCompletion = m.completionTime;
             }
 
-            totalBurst += p.getBurstTime();
+            totalBurst += m.burstTime;
         }
 
-        double avgWT  = sumWT  / n;
+        double avgWT = sumWT / n;
         double avgTAT = sumTAT / n;
-        double avgRT  = sumRT  / n;
+        double avgRT = sumRT / n;
 
         int totalTime = Math.max(1, maxCompletion - minArrival);
 
