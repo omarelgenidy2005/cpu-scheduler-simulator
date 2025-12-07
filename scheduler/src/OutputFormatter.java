@@ -32,7 +32,6 @@ public class OutputFormatter {
         System.out.println();
     }
 
-    
 
     private static void printGanttChart(List<GanttEntry> ganttEntries) {
         System.out.println("Gantt Chart (time on bottom):");
@@ -74,30 +73,33 @@ public class OutputFormatter {
         System.out.println(timeLine);
     }
 
-   
+    
 
     private static void printProcessTable(List<ProcessMetrics> metrics) {
         System.out.println("Per-Process Metrics:");
         System.out.println("---------------------------------------------------------------");
         System.out.printf("%-6s %-6s %-6s %-6s %-6s %-6s %-6s%n",
                 "PID", "AT", "BT", "CT", "TAT", "WT", "RT");
-        System.out.println("------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------");
 
         metrics.stream()
-                .sorted(Comparator.comparing(m -> m.pid))
-                .forEach(m -> System.out.printf("%-6s %-6d %-6d %-6d %-6d %-6d %-6d%n",
-                        m.pid,
-                        m.arrivalTime,
-                        m.burstTime,
-                        m.completionTime,
-                        m.turnaroundTime,
-                        m.waitingTime,
-                        m.responseTime));
+                .sorted(Comparator.comparing(m -> m.getProcess().getPid()))
+                .forEach(m -> {
+                    Process p = m.getProcess();
+                    System.out.printf("%-6s %-6d %-6d %-6d %-6d %-6d %-6d%n",
+                            p.getPid(),
+                            p.getArrivalTime(),
+                            p.getBurstTime(),
+                            m.getCompletionTime(),
+                            m.getTurnaroundTime(),
+                            m.getWaitingTime(),
+                            m.getResponseTime());
+                });
 
-        System.out.println("------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------");
     }
 
-  
+ 
 
     private static void printGlobalMetrics(List<ProcessMetrics> metrics) {
         int n = metrics.size();
@@ -111,23 +113,25 @@ public class OutputFormatter {
         int totalBurst = 0;
 
         for (ProcessMetrics m : metrics) {
-            sumWT += m.waitingTime;
-            sumTAT += m.turnaroundTime;
-            sumRT += m.responseTime;
+            Process p = m.getProcess();
 
-            if (m.arrivalTime < minArrival) {
-                minArrival = m.arrivalTime;
+            sumWT  += m.getWaitingTime();
+            sumTAT += m.getTurnaroundTime();
+            sumRT  += m.getResponseTime();
+
+            if (p.getArrivalTime() < minArrival) {
+                minArrival = p.getArrivalTime();
             }
-            if (m.completionTime > maxCompletion) {
-                maxCompletion = m.completionTime;
+            if (m.getCompletionTime() > maxCompletion) {
+                maxCompletion = m.getCompletionTime();
             }
 
-            totalBurst += m.burstTime;
+            totalBurst += p.getBurstTime();
         }
 
-        double avgWT = sumWT / n;
+        double avgWT  = sumWT  / n;
         double avgTAT = sumTAT / n;
-        double avgRT = sumRT / n;
+        double avgRT  = sumRT  / n;
 
         int totalTime = Math.max(1, maxCompletion - minArrival);
 
@@ -142,7 +146,7 @@ public class OutputFormatter {
         System.out.printf("  CPU Utilization         : %.2f%%%n", cpuUtil);
     }
 
-   
+
 
     private static String repeat(String s, int count) {
         StringBuilder sb = new StringBuilder();
