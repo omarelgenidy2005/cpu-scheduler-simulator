@@ -12,8 +12,23 @@ public class Main {
                 System.out.println(p);
             }
             
+            List<Process> processes = ProcessCSVreader.loadProcesses("C:\\Users\\moham\\IdeaProjects\\cpu-scheduler-simulator-project\\scheduler\\src\\processesok.csv");
+
+            System.out.println("Loaded processes:");
+            for (Process p : processes) {
+                System.out.println(p);
+            }
             FCFSScheduler fcfs = new FCFSScheduler();
-            SchedulerResult r1 = fcfs.schedule(processes);
+            SchedulerResult fcfsResult = fcfs.schedule(processes);
+            OutputFormatter.printScheduleReport("FCFS", fcfsResult);
+
+            PriorityNonPreemptiveScheduler scheduler = new PriorityNonPreemptiveScheduler();
+
+            scheduler.schedule(processes);
+
+            SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
+            SchedulerResult sjfResult = sjf.schedule(processes);
+            OutputFormatter.printScheduleReport("SJF (Non-Preemptive)", sjfResult);
 
             System.out.println("===== FCFS =====");
             r1.getGantt().forEach(System.out::println);
@@ -22,10 +37,8 @@ public class Main {
             SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
             SchedulerResult r2 = sjf.schedule(processes);
 
-            System.out.println("\n===== SJF NON-PREEMPTIVE =====");
-            r2.getGantt().forEach(System.out::println);
-            r2.getMetrics().values().forEach(System.out::println);
-            PriorityPreemptiveScheduler.run(processes);  //omar elgenidy part
+            PriorityPreemptiveScheduler.run(processes); //omar elgnidy part
+
         } catch (IOException e) {
             System.err.println("I/O error while reading file: " + e.getMessage());
         } catch (IllegalArgumentException e) {

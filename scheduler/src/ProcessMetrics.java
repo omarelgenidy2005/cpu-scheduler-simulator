@@ -1,40 +1,50 @@
 public class ProcessMetrics {
 
     private final Process process;
-    private final int completionTime;
-    private final int turnaroundTime;
-    private final int waitingTime;
-    private final int responseTime;
+    public final String pid;
+    public final int arrivalTime;
+    public final int burstTime;
 
-    public ProcessMetrics(Process process,
+    private int completionTime;
+    private int turnaroundTime;
+    private int waitingTime;
+    private int responseTime;
+
+    public ProcessMetrics(Process p) {
+        this.process = p;
+        this.pid = p.getPid();
+        this.arrivalTime = p.getArrivalTime();
+        this.burstTime = p.getBurstTime();
+
+    }
+
+    public ProcessMetrics(Process p,
                           int completionTime,
                           int turnaroundTime,
                           int waitingTime,
                           int responseTime) {
-        this.process = process;
+        this(p);
         this.completionTime = completionTime;
         this.turnaroundTime = turnaroundTime;
         this.waitingTime = waitingTime;
         this.responseTime = responseTime;
     }
 
-    public Process getProcess() {
-        return process;
+    @Override
+    public String toString() {
+        return pid + " | CT= " + completionTime +
+                " | TAT= " + turnaroundTime +
+                " | WT= " + waitingTime +
+                " | RT= " + responseTime;
     }
 
-    public int getCompletionTime() {
-        return completionTime;
-    }
+    public Process getProcess() { return process; }
 
-    public int getTurnaroundTime() {
-        return turnaroundTime;
-    }
+    public int getCompletionTime() { return completionTime; }
 
-    public int getWaitingTime() {
-        return waitingTime;
-    }
+    public int getTurnaroundTime() { return turnaroundTime; }
 
-    public int getResponseTime() {
-        return responseTime;
-    }
+    public int getWaitingTime() { return waitingTime; }
+
+    public int getResponseTime() { return responseTime; }
 }
