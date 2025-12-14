@@ -72,10 +72,6 @@ public class Process {
         this.startTime = startTime;
     }
 
-    public int getCompletionTime() {
-        return completionTime;
-
-    }
 
     public void setCompletionTime(int completionTime) {
         if (completionTime < 0) {
@@ -84,15 +80,8 @@ public class Process {
         this.completionTime = completionTime;
     }
 
-    public int getTurnaroundTime() {
-        if (completionTime < 0) return -1;
-        return completionTime - arrivalTime;
-    }
 
-    public int getWaitingTime() {
-        if (completionTime < 0) return -1;
-        return getTurnaroundTime() - burstTime;
-    }
+
 
     @Override
     public String toString() {

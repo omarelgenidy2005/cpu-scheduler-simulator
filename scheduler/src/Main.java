@@ -17,8 +17,9 @@ public class Main {
             OutputFormatter.printScheduleReport("FCFS", fcfsResult);
 
             PriorityNonPreemptiveScheduler scheduler = new PriorityNonPreemptiveScheduler();
+            SchedulerResult prioResult = scheduler.schedule(processes);
+            OutputFormatter.printScheduleReport("Priority (Non-Preemptive)", prioResult);
 
-            scheduler.schedule(processes);
 
             SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
             SchedulerResult sjfResult = sjf.schedule(processes);
@@ -40,7 +41,9 @@ public class Main {
             SchedulerResult rrResult = rr.schedule(processes, quantum);
             OutputFormatter.printScheduleReport("Round Robin (q=" + quantum + ")", rrResult);
 
-            PriorityPreemptiveScheduler.run(processes);
+            PriorityPreemptiveScheduler prioP = new PriorityPreemptiveScheduler();
+            SchedulerResult prioPResult = prioP.schedule(processes);
+            OutputFormatter.printScheduleReport("Priority (Preemptive)", prioPResult);
 
         } catch (IOException e) {
             System.err.println(e.getMessage());

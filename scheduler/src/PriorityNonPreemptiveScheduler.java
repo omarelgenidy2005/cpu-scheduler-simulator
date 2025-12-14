@@ -1,36 +1,34 @@
-
 import java.util.*;
 
 public class PriorityNonPreemptiveScheduler {
 
-    private final static List<String> ganttChart = new ArrayList<>();
 
-    public  static void schedule(List<Process> processes) {
+    public SchedulerResult schedule(List<Process> processes) {
 
-        processes.sort(Comparator.comparingInt(Process::getArrivalTime));
+        List<Process> sorted = new ArrayList<>(processes);
 
+        sorted.sort(Comparator.comparingInt(Process::getArrivalTime)
+                .thenComparingInt(Process::getPriority)
+                .thenComparing(Process::getPid));
+
+        int n = sorted.size();
         int time = 0;
         int completed = 0;
-        int n = processes.size();
 
-        Map<Process, Integer> startTime = new HashMap<>();
-        Map<Process, Integer> completionTime = new HashMap<>();
-        Map<Process, Integer> waitingTime = new HashMap<>();
-        Map<Process, Integer> turnaroundTime = new HashMap<>();
-        Map<Process, Integer> responseTime = new HashMap<>();
+        boolean[] done = new boolean[n];
 
-        boolean[] visited = new boolean[n];
+        List<GanttEntry> gantt = new ArrayList<>();
+        Map<String, ProcessMetrics> metrics = new LinkedHashMap<>();
 
         while (completed < n) {
 
             int bestIndex = -1;
             int bestPriority = Integer.MAX_VALUE;
 
+
             for (int i = 0; i < n; i++) {
-                Process p = processes.get(i);
-
-                if (!visited[i] && p.getArrivalTime() <= time) {
-
+                Process p = sorted.get(i);
+                if (!done[i] && p.getArrivalTime() <= time) {
                     if (p.getPriority() < bestPriority) {
                         bestPriority = p.getPriority();
                         bestIndex = i;
@@ -39,60 +37,49 @@ public class PriorityNonPreemptiveScheduler {
             }
 
             if (bestIndex == -1) {
-                ganttChart.add("IDLE");
-                time++;
+
+                int nextArrival = Integer.MAX_VALUE;
+                for (int i = 0; i < n; i++) {
+                    if (!done[i] && sorted.get(i).getArrivalTime() > time) {
+                        nextArrival = Math.min(nextArrival, sorted.get(i).getArrivalTime());
+                    }
+                }
+                if (nextArrival == Integer.MAX_VALUE) {
+                    break;
+                }
+                gantt.add(new GanttEntry("IDLE", time, nextArrival));
+                time = nextArrival;
                 continue;
             }
 
-            Process current = processes.get(bestIndex);
+            Process current = sorted.get(bestIndex);
 
-            startTime.putIfAbsent(current, time);
-
-            ganttChart.add(current.getPid());
-
-            time += current.getBurstTime();
-            visited[bestIndex] = true;
-            completed++;
-
-            completionTime.put(current, time);
-
-            int tat = time - current.getArrivalTime();
-            turnaroundTime.put(current, tat);
-
-            int wt = tat - current.getBurstTime();
-            waitingTime.put(current, wt);
-
-            int rt = startTime.get(current) - current.getArrivalTime();
-            responseTime.put(current, rt);
-        }
-
-        printResults(processes, startTime, completionTime, waitingTime, turnaroundTime, responseTime);
-    }
+            int start = time;
+            int end   = start + current.getBurstTime();
 
 
-    private static void printResults(
-            List<Process> processes,
-            Map<Process, Integer> startTime,
-            Map<Process, Integer> completionTime,
-            Map<Process, Integer> waitingTime,
-            Map<Process, Integer> turnaroundTime,
-            Map<Process, Integer> responseTime) {
+            gantt.add(new GanttEntry(current.getPid(), start, end));
 
-        System.out.println("\n===== Priority Scheduling (Non-Preemptive) =====");
-        System.out.println("\nGantt Chart: " + ganttChart);
 
-        System.out.println("\nPID\tAT\tBT\tP\tCT\tTAT\tWT\tRT");
-        for (Process p : processes) {
-            System.out.println(
-                    p.getPid() + "\t" +
-                            p.getArrivalTime() + "\t" +
-                            p.getBurstTime() + "\t" +
-                            p.getPriority() + "\t" +
-                            completionTime.get(p) + "\t" +
-                            turnaroundTime.get(p) + "\t" +
-                            waitingTime.get(p) + "\t" +
-                            responseTime.get(p)
+            int completionTime = end;
+            int turnaroundTime = completionTime - current.getArrivalTime();
+            int waitingTime    = turnaroundTime - current.getBurstTime();
+            int responseTime   = start - current.getArrivalTime();
+
+            ProcessMetrics m = new ProcessMetrics(
+                    current,
+                    completionTime,
+                    turnaroundTime,
+                    waitingTime,
+                    responseTime
             );
+            metrics.put(current.getPid(), m);
+
+            done[bestIndex] = true;
+            completed++;
+            time = end;
         }
+
+        return new SchedulerResult(gantt, metrics);
     }
 }
