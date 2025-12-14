@@ -3,14 +3,8 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        String path = "processesok.csv";
 
         try {
-            List<Process> processes = ProcessCSVreader.loadProcesses(path);
-            System.out.println("Loaded processes:");
-            for (Process p : processes) {
-                System.out.println(p);
-            }
             
             List<Process> processes = ProcessCSVreader.loadProcesses("C:\\Users\\moham\\IdeaProjects\\cpu-scheduler-simulator-project\\scheduler\\src\\processesok.csv");
 
@@ -23,32 +17,38 @@ public class Main {
             OutputFormatter.printScheduleReport("FCFS", fcfsResult);
 
             PriorityNonPreemptiveScheduler scheduler = new PriorityNonPreemptiveScheduler();
+            SchedulerResult prioResult = scheduler.schedule(processes);
+            OutputFormatter.printScheduleReport("Priority (Non-Preemptive)", prioResult);
 
-            scheduler.schedule(processes);
 
             SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
             SchedulerResult sjfResult = sjf.schedule(processes);
             OutputFormatter.printScheduleReport("SJF (Non-Preemptive)", sjfResult);
 
-            System.out.println("===== FCFS =====");
-            r1.getGantt().forEach(System.out::println);
-            r1.getMetrics().values().forEach(System.out::println);
+            MultiLevelQueueScheduler mlq = new MultiLevelQueueScheduler();
+            SchedulerResult mlqResult = mlq.schedule(processes);
+            OutputFormatter.printScheduleReport("Multi-Level Queue (MLQ)", mlqResult);
 
-            SJFNonPreemptiveScheduler sjf = new SJFNonPreemptiveScheduler();
-            SchedulerResult r2 = sjf.schedule(processes);
+            MultiLevelFeedbackQueueScheduler mlfq = new MultiLevelFeedbackQueueScheduler();
+            SchedulerResult mlfqResult = mlfq.schedule(processes);
+            OutputFormatter.printScheduleReport("Multi-Level Feedback Queue (MLFQ)", mlfqResult);
+
+
 
             RoundRobin rr = new RoundRobin();
             int quantum = 2;
 
             SchedulerResult rrResult = rr.schedule(processes, quantum);
             OutputFormatter.printScheduleReport("Round Robin (q=" + quantum + ")", rrResult);
-          
-            PriorityPreemptiveScheduler.run(processes); //omar elgnidy part
+
+            PriorityPreemptiveScheduler prioP = new PriorityPreemptiveScheduler();
+            SchedulerResult prioPResult = prioP.schedule(processes);
+            OutputFormatter.printScheduleReport("Priority (Preemptive)", prioPResult);
 
         } catch (IOException e) {
-            System.err.println("I/O error while reading file: " + e.getMessage());
+            System.err.println(e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.err.println("Invalid process data: " + e.getMessage());
+            System.err.println(e.getMessage());
         }
     }
 }
